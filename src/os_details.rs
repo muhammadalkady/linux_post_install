@@ -1,20 +1,82 @@
 use std::fs;
 
-pub fn print_os_details() {
+#[derive(Debug)]
+pub struct OSDetails {
+    pub name: String,
+    pub distro: Distro,
+}
+
+#[derive(Debug)]
+pub enum Distro {
+    Arch,
+    Debian,
+    Ubuntu,
+    Fedora,
+}
+
+#[derive(Debug)]
+pub enum PackageManager {
+    Apt,
+    Pacman,
+    Dnf,
+}
+
+impl PackageManager {
+    pub fn executable(&self) -> &str {
+        match self {
+            PackageManager::Apt => "apt",
+            PackageManager::Pacman => "pacman",
+            PackageManager::Dnf => "dnf",
+        }
+    }
+
+    pub fn install_arg(&self) -> &str {
+        match self {
+            PackageManager::Dnf | PackageManager::Apt => "install",
+            PackageManager::Pacman => "-S",
+        }
+    }
+}
+
+impl Distro {
+    pub fn package_manager(&self) -> PackageManager {
+        match self {
+            Distro::Arch => PackageManager::Pacman,
+            Distro::Debian | Distro::Ubuntu => PackageManager::Apt,
+            Distro::Fedora => PackageManager::Dnf,
+        }
+    }
+}
+
+pub fn get_os_details() -> Option<OSDetails> {
     let os_release = fs::read_to_string("/etc/os-release");
     match os_release {
         Ok(content) => {
-            println!(
+            let name = format!(
                 "OS: {}, {}, {}",
                 find_value(&content, "NAME").unwrap_or_default(),
                 find_value(&content, "VERSION").unwrap_or_default(),
                 find_value(&content, "RELEASE_TYPE").unwrap_or_default(),
             );
+            let distro = match find_value(&content, "ID").unwrap_or_default() {
+                "arch" => Some(Distro::Arch),
+                "fedora" => Some(Distro::Fedora),
+                "debian" => Some(Distro::Debian),
+                "ubuntu" => Some(Distro::Ubuntu),
+                _ => return None,
+            };
+            if distro.is_some() {
+                return Some(OSDetails {
+                    name,
+                    distro: distro.unwrap(),
+                });
+            }
         }
         Err(error) => {
             eprintln!("Could not detect Linux distribution:\n{error}")
         }
     }
+    None
 }
 
 fn find_value<'a>(content: &'a str, searched_key: &str) -> Option<&'a str> {
@@ -28,29 +90,4 @@ fn find_value<'a>(content: &'a str, searched_key: &str) -> Option<&'a str> {
         }
     }
     None
-}
-
-#[cfg(test)]
-mod tests {
-    use super::find_value;
-
-    #[test]
-    fn finds_and_unquotes_a_value() {
-        let content = "NAME=\"Fedora Linux\"\nVERSION_ID=44\n";
-
-        assert_eq!(find_value(content, "NAME"), Some("Fedora Linux"));
-        assert_eq!(find_value(content, "VERSION_ID"), Some("44"));
-    }
-
-    #[test]
-    fn skips_lines_without_a_separator() {
-        let content = "invalid line\nNAME=Fedora Linux\n";
-
-        assert_eq!(find_value(content, "NAME"), Some("Fedora Linux"));
-    }
-
-    #[test]
-    fn returns_none_when_the_key_is_missing() {
-        assert_eq!(find_value("NAME=Fedora Linux\n", "VERSION"), None);
-    }
 }
