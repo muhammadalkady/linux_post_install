@@ -1,0 +1,48 @@
+selected_profiles = ["base", "desktop", "development"]
+flatpaks = [
+  "com.google.Chrome",
+  "io.missioncenter.MissionCenter",
+  "me.iepure.devtoolbox",
+]
+system_services = ["libvirtd.service", "cups.service"]
+user_services = []
+
+[danklinux]
+enabled = true
+installer_url = "https://install.danklinux.com"
+
+[profiles.base]
+common = ["git", "curl", "rsync", "unzip", "zip"]
+
+[profiles.base.packages]
+fedora = ["wget2-wget", "gnupg2"]
+arch = ["wget", "gnupg"]
+debian = ["wget", "gnupg"]
+ubuntu = ["wget", "gnupg"]
+opensuse = ["wget", "gpg2"]
+
+[profiles.desktop]
+common = ["niri", "wl-clipboard", "cava"]
+
+[profiles.desktop.packages]
+fedora = ["ghostty", "qt6ct", "nwg-look", "pavucontrol", "cliphist"]
+arch = ["ghostty", "qt6ct", "nwg-look", "pavucontrol", "cliphist"]
+
+[profiles.development]
+common = ["rustup", "cmake", "gitui"]
+
+[profiles.development.packages]
+fedora = ["golang-bin", "nodejs22", "python3-pip", "pipx", "clang", "ninja-build", "gh"]
+arch = ["go", "nodejs", "python-pip", "python-pipx", "clang", "ninja", "github-cli"]
+debian = ["golang", "nodejs", "python3-pip", "pipx", "clang", "ninja-build", "gh"]
+ubuntu = ["golang", "nodejs", "python3-pip", "pipx", "clang", "ninja-build", "gh"]
+
+# Sources are relative to this manifest. Existing target files are replaced,
+# but files absent from the source are not deleted from the target.
+[[dotfiles]]
+source = "dotfiles/DankMaterialShell"
+target = "~/.config/DankMaterialShell"
+
+[[dotfiles]]
+source = "dotfiles/niri"
+target = "~/.config/niri"

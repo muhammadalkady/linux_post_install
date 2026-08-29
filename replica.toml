@@ -1,0 +1,103 @@
+selected_profiles = ["base", "desktop", "development"]
+flatpaks = [
+  "com.google.Chrome",
+  "io.missioncenter.MissionCenter",
+  "me.iepure.devtoolbox",
+]
+system_services = ["libvirtd.service", "cups.service"]
+user_services = []
+
+[danklinux]
+enabled = true
+installer_url = "https://install.danklinux.com"
+
+[profiles.base]
+common = ["git", "curl", "rsync", "unzip", "zip"]
+
+[profiles.base.packages]
+fedora = ["wget2-wget", "gnupg2"]
+arch = ["wget", "gnupg"]
+debian = ["wget", "gnupg"]
+ubuntu = ["wget", "gnupg"]
+opensuse = ["wget", "gpg2"]
+
+[profiles.desktop]
+common = ["wl-clipboard", "cava", "brightnessctl", "playerctl", "grim", "slurp"]
+
+[profiles.desktop.packages]
+fedora = [
+  "niri",
+  "hyprland",
+  "hypridle",
+  "hyprlock",
+  "hyprpaper",
+  "hyprsunset",
+  "ghostty",
+  "kvantum",
+  "nwg-look",
+  "pavucontrol",
+  "cliphist",
+  "matugen",
+]
+arch = [
+  "niri",
+  "hyprland",
+  "hypridle",
+  "hyprlock",
+  "hyprpaper",
+  "hyprsunset",
+  "ghostty",
+  "kvantum",
+  "nwg-look",
+  "pavucontrol",
+  "cliphist",
+  "matugen-bin",
+]
+
+[profiles.development]
+common = ["rustup", "cmake", "gitui"]
+
+[profiles.development.packages]
+fedora = ["golang-bin", "nodejs22", "python3-pip", "pipx", "clang", "ninja-build", "gh"]
+arch = ["go", "nodejs", "python-pip", "python-pipx", "clang", "ninja", "github-cli"]
+debian = ["golang", "nodejs", "python3-pip", "pipx", "clang", "ninja-build", "gh"]
+ubuntu = ["golang", "nodejs", "python3-pip", "pipx", "clang", "ninja-build", "gh"]
+
+# Sources are relative to this manifest. Existing target files are replaced,
+# but files absent from the source are not deleted from the target.
+[[dotfiles]]
+source = "dotfiles/DankMaterialShell"
+target = "~/.config/DankMaterialShell"
+
+[[dotfiles]]
+source = "dotfiles/hypr"
+target = "~/.config/hypr"
+
+[[dotfiles]]
+source = "dotfiles/ghostty"
+target = "~/.config/ghostty"
+
+[[dotfiles]]
+source = "dotfiles/ml4w"
+target = "~/.config/ml4w"
+
+[[dotfiles]]
+source = "dotfiles/gtk-3.0"
+target = "~/.config/gtk-3.0"
+
+[[dotfiles]]
+source = "dotfiles/gtk-4.0"
+target = "~/.config/gtk-4.0"
+
+[[dotfiles]]
+source = "dotfiles/Kvantum"
+target = "~/.config/Kvantum"
+
+[[dotfiles]]
+source = "dotfiles/wallpapers/current.jpg"
+target = "~/.local/share/wallpapers/current.jpg"
+
+[[dotfiles]]
+source = "dotfiles/DankMaterialShell-state/session.json"
+target = "~/.local/state/DankMaterialShell/session.json"
+template = true

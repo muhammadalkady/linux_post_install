@@ -1,0 +1,12 @@
+{
+    "dock": {
+        "enabled": true,
+        "autohide": true
+    },
+    "apps": {
+        "pinned": [
+            "kitty",
+            "org.gnome.Nautilus"
+        ]
+    }
+}

@@ -16,7 +16,7 @@ pub struct OSDetails {
 }
 
 /// A supported Linux distribution.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Distro {
     /// Arch Linux.
     Arch,
@@ -114,6 +114,32 @@ impl PackageManager {
 }
 
 impl Distro {
+    /// Returns the manifest key used for distribution-specific package lists.
+    pub fn manifest_key(&self) -> &'static str {
+        match self {
+            Distro::Arch => "arch",
+            Distro::Manjaro => "manjaro",
+            Distro::EndeavourOS => "endeavouros",
+            Distro::Debian => "debian",
+            Distro::Ubuntu => "ubuntu",
+            Distro::LinuxMint => "linuxmint",
+            Distro::PopOS => "pop",
+            Distro::ElementaryOS => "elementary",
+            Distro::Kali => "kali",
+            Distro::Fedora => "fedora",
+            Distro::Rhel => "rhel",
+            Distro::CentOS => "centos",
+            Distro::RockyLinux => "rocky",
+            Distro::AlmaLinux => "almalinux",
+            Distro::AmazonLinux => "amzn",
+            Distro::OpenSUSE => "opensuse",
+            Distro::Alpine => "alpine",
+            Distro::Void => "void",
+            Distro::Gentoo => "gentoo",
+            Distro::Solus => "solus",
+        }
+    }
+
     /// Returns the package manager associated with this distribution.
     pub fn package_manager(&self) -> PackageManager {
         match self {
