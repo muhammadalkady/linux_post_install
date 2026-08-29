@@ -8,7 +8,7 @@ pub fn install_packages(
 ) -> io::Result<ExitStatus> {
     let mut command = Command::new("sudo");
     command.arg(package_manager.executable());
-    command.arg(package_manager.install_arg());
+    command.args(package_manager.install_args());
     command.args(packages_names);
     command.status()
 }
