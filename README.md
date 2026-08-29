@@ -33,14 +33,48 @@ cargo run -- dry-run replica.toml
 cargo run -- apply replica.toml
 ```
 
-To apply only selected profiles from the default `replica.toml`:
+To apply selected profiles from the manifest and desktop bundle embedded in the
+executable:
 
 ```sh
 cargo run -- install base,desktop
 ```
 
+Preview that same embedded bundle without changing the machine:
+
+```sh
+cargo run -- bundled-dry-run
+```
+
 Every command is printed before it runs. Package installation and system
 services use `sudo`, so the system may request authentication.
+
+## Build a standalone installer
+
+The release binary embeds `replica.toml` and the complete `dotfiles/` tree at
+compile time. Build it once:
+
+```sh
+cargo build --release
+```
+
+Copy only `target/release/linux_post_install` to the new Linux machine. The
+repository, manifest, wallpaper, and dotfiles do not need to be copied. Preview
+and install the embedded workstation profile with:
+
+```sh
+./linux_post_install bundled-dry-run
+./linux_post_install install
+```
+
+The bundle is extracted into a unique temporary directory during execution and
+removed afterward. Rebuild the release binary whenever `replica.toml` or any
+bundled dotfile changes.
+
+Pushes to `master` also run the GitHub Actions build workflow. After it
+finishes, download the `linux_post_install-x86_64-unknown-linux-gnu` artifact
+from the workflow run. It contains the standalone binary in a compressed tar
+archive and a SHA-256 checksum file.
 
 ## Commands
 

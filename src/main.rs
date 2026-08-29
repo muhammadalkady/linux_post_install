@@ -1,4 +1,5 @@
 mod apply;
+mod bundle;
 mod capture;
 mod manifest;
 mod os_details;
@@ -10,7 +11,6 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 const OS_RELEASE_PATH: &str = "/etc/os-release";
-const DEFAULT_MANIFEST_PATH: &str = "replica.toml";
 
 fn main() -> ExitCode {
     match run(env::args().skip(1).collect()) {
@@ -43,11 +43,18 @@ fn run(args: Vec<String>) -> Result<(), String> {
             let manifest = Manifest::read(&path)?;
             apply::apply(&manifest, &path, os.distro, &[], command == "dry-run")
         }
-        "install" => {
-            let path = Path::new(DEFAULT_MANIFEST_PATH);
-            let manifest = Manifest::read(path)?;
+        "install" | "bundled-dry-run" => {
+            let bundle = bundle::ExtractedBundle::extract()?;
+            let path = bundle.manifest_path();
+            let manifest = Manifest::read(&path)?;
             let profiles = parse_profiles(&args[1..]);
-            apply::apply(&manifest, path, os.distro, &profiles, false)
+            apply::apply(
+                &manifest,
+                &path,
+                os.distro,
+                &profiles,
+                command == "bundled-dry-run",
+            )
         }
         "capture" => {
             let path = args
@@ -79,9 +86,10 @@ fn print_help() {
          linux_post_install dry-run <manifest>\n  \
          linux_post_install apply <manifest>\n  \
          linux_post_install install [profile[,profile] ...]\n  \
+         linux_post_install bundled-dry-run [profile[,profile] ...]\n  \
          linux_post_install capture <manifest>\n\n\
-         The install command reads {DEFAULT_MANIFEST_PATH}; apply and dry-run use\n\
-         the manifest's selected_profiles."
+         Install uses the manifest and dotfiles embedded in the binary. Apply and\n\
+         dry-run accept an external manifest."
     );
 }
 

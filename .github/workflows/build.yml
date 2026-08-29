@@ -1,0 +1,43 @@
+name: Build standalone binary
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Linux x86_64 binary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Run tests
+        run: cargo test --locked
+
+      - name: Run Clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Build release binary
+        run: cargo build --locked --release
+
+      - name: Package standalone binary
+        run: |
+          tar -C target/release -czf linux_post_install-x86_64-unknown-linux-gnu.tar.gz linux_post_install
+          sha256sum linux_post_install-x86_64-unknown-linux-gnu.tar.gz > linux_post_install-x86_64-unknown-linux-gnu.tar.gz.sha256
+
+      - name: Upload standalone binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux_post_install-x86_64-unknown-linux-gnu
+          path: |
+            linux_post_install-x86_64-unknown-linux-gnu.tar.gz
+            linux_post_install-x86_64-unknown-linux-gnu.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
