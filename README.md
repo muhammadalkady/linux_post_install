@@ -71,10 +71,12 @@ The bundle is extracted into a unique temporary directory during execution and
 removed afterward. Rebuild the release binary whenever `replica.toml` or any
 bundled dotfile changes.
 
-Pushes to `master` also run the GitHub Actions build workflow. After it
-finishes, download the `linux_post_install-x86_64-unknown-linux-gnu` artifact
-from the workflow run. It contains the standalone binary in a compressed tar
-archive and a SHA-256 checksum file.
+Pushes to `master` run the GitHub Actions release workflow. It increments the
+Cargo patch version (for example, `0.1.0` to `0.1.1`), updates `Cargo.lock`, and
+commits the version with `[skip ci]` to avoid a recursive workflow run. It then
+creates the matching annotated tag and GitHub Release and attaches the
+standalone compressed binary and its SHA-256 checksum. The same files remain
+available as a 30-day workflow artifact.
 
 ## Commands
 

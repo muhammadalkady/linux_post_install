@@ -1,4 +1,4 @@
-name: Build standalone binary
+name: Build and release standalone binary
 
 on:
   push:
@@ -7,16 +7,42 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: release-master
+  cancel-in-progress: false
 
 jobs:
   build:
-    name: Build Linux x86_64 binary
+    name: Version, build, and release Linux x86_64 binary
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Update local master
+        run: git pull --ff-only origin master
+
+      - name: Increment patch version
+        id: version
+        shell: bash
+        run: |
+          current_version="$(sed -n 's/^version = "\([0-9][0-9.]*\)"/\1/p' Cargo.toml | head -n 1)"
+          if [[ ! "$current_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "Invalid package version in Cargo.toml: $current_version" >&2
+            exit 1
+          fi
+          next_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((BASH_REMATCH[3] + 1))"
+          sed -i "0,/^version = \"$current_version\"/s//version = \"$next_version\"/" Cargo.toml
+          echo "version=$next_version" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$next_version" >> "$GITHUB_ENV"
+
+      - name: Update lockfile
+        run: cargo check
 
       - name: Run tests
         run: cargo test --locked
@@ -29,15 +55,37 @@ jobs:
 
       - name: Package standalone binary
         run: |
-          tar -C target/release -czf linux_post_install-x86_64-unknown-linux-gnu.tar.gz linux_post_install
-          sha256sum linux_post_install-x86_64-unknown-linux-gnu.tar.gz > linux_post_install-x86_64-unknown-linux-gnu.tar.gz.sha256
+          archive="linux_post_install-v${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          tar -C target/release -czf "$archive" linux_post_install
+          sha256sum "$archive" > "$archive.sha256"
+
+      - name: Commit and tag version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml Cargo.lock
+          git commit -m "chore: release v${VERSION} [skip ci]"
+          git tag -a "v${VERSION}" -m "Release v${VERSION}"
+          git push origin HEAD:master --follow-tags
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          archive="linux_post_install-v${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          gh release create "v${VERSION}" \
+            "$archive" \
+            "$archive.sha256" \
+            --verify-tag \
+            --generate-notes \
+            --title "v${VERSION}"
 
       - name: Upload standalone binary
         uses: actions/upload-artifact@v7
         with:
-          name: linux_post_install-x86_64-unknown-linux-gnu
+          name: linux_post_install-v${{ steps.version.outputs.version }}-x86_64-unknown-linux-gnu
           path: |
-            linux_post_install-x86_64-unknown-linux-gnu.tar.gz
-            linux_post_install-x86_64-unknown-linux-gnu.tar.gz.sha256
+            linux_post_install-v${{ steps.version.outputs.version }}-x86_64-unknown-linux-gnu.tar.gz
+            linux_post_install-v${{ steps.version.outputs.version }}-x86_64-unknown-linux-gnu.tar.gz.sha256
           if-no-files-found: error
           retention-days: 30
