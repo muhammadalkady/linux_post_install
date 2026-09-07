@@ -39,6 +39,10 @@ pub fn apply(
         run("sudo", &args, dry_run)?;
     }
 
+    let base = manifest_path.parent().unwrap_or_else(|| Path::new("."));
+    install_systemd_units(base, dry_run)?;
+    install_claude_code(dry_run)?;
+
     if manifest.danklinux.enabled {
         if !manifest.danklinux.installer_url.starts_with("https://") {
             return Err("DankLinux installer_url must use HTTPS".into());
@@ -81,11 +85,81 @@ pub fn apply(
         )?;
     }
 
-    let base = manifest_path.parent().unwrap_or_else(|| Path::new("."));
     for dotfile in &manifest.dotfiles {
         copy_dotfile(dotfile, base, dry_run)?;
     }
     Ok(())
+}
+
+/// Installs and enables every `*.service` unit tracked in `dotfiles/systemd`.
+///
+/// `system_services` in the manifest can only enable units that already
+/// exist on the target, since dotfile copies and most manifest steps run
+/// without root. These unit files need an explicit `sudo cp` first.
+fn install_systemd_units(base: &Path, dry_run: bool) -> Result<(), String> {
+    let units_dir = base.join("dotfiles/systemd");
+    if !units_dir.is_dir() {
+        return Ok(());
+    }
+
+    let mut units: Vec<PathBuf> = fs::read_dir(&units_dir)
+        .map_err(|error| format!("Could not read {}: {error}", units_dir.display()))?
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "service"))
+        .collect();
+    units.sort();
+    if units.is_empty() {
+        return Ok(());
+    }
+
+    for unit in &units {
+        let name = unit.file_name().unwrap().to_string_lossy().into_owned();
+        let target = format!("/etc/systemd/system/{name}");
+        run(
+            "sudo",
+            &["cp".into(), unit.to_string_lossy().into_owned(), target],
+            dry_run,
+        )?;
+    }
+    run(
+        "sudo",
+        &["systemctl".into(), "daemon-reload".into()],
+        dry_run,
+    )?;
+    for unit in &units {
+        let name = unit.file_name().unwrap().to_string_lossy().into_owned();
+        run(
+            "sudo",
+            &["systemctl".into(), "enable".into(), "--now".into(), name],
+            dry_run,
+        )?;
+    }
+    Ok(())
+}
+
+/// Installs Claude Code via the official installer, unless it is already on
+/// `PATH`. Not a distro package, so it can't live in a package profile.
+fn install_claude_code(dry_run: bool) -> Result<(), String> {
+    let already_installed = Command::new("sh")
+        .args(["-c", "command -v claude"])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false);
+    if already_installed {
+        println!("Claude Code already installed, skipping");
+        return Ok(());
+    }
+    run(
+        "sh",
+        &[
+            "-c".into(),
+            "curl -fsSL https://claude.ai/install.sh | bash".into(),
+        ],
+        dry_run,
+    )
 }
 
 fn run(program: &str, args: &[String], dry_run: bool) -> Result<(), String> {
