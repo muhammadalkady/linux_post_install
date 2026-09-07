@@ -49,10 +49,10 @@ export GRIMBLAST_EDITOR="$(cat ~/.config/ml4w/settings/screenshot-editor)"
 
 # Quick instant mode: full screen
 take_instant_full() {
-    grim -t "$image_format" "$NAME" && notify_user \
+    grim -t "$image_format" "$NAME" && wl-copy --type "image/$image_format" < "$NAME" && notify_user \
         --a "${APP_NAME}" \
         --i "${NOTIFICATION_ICON}" \
-        --s "Screenshot saved" \
+        --s "Screenshot saved and copied" \
         --m "$screenshot_folder/$NAME" \
         --t 1000
 
@@ -78,10 +78,10 @@ take_instant_area() {
     trap - EXIT
 
     # capture and notify
-    grim -g "$region" -t "$image_format" "$NAME" && notify_user \
+    grim -g "$region" -t "$image_format" "$NAME" && wl-copy --type "image/$image_format" < "$NAME" && notify_user \
         --a "${APP_NAME}" \
         --i "${NOTIFICATION_ICON}" \
-        --s "Screenshot saved" \
+        --s "Screenshot saved and copied" \
         --m "$screenshot_folder/$NAME" \
         --t 1000
     [[ -f "$HOME/$NAME" && -d "$screenshot_folder" && -w "$screenshot_folder" ]] && mv "$HOME/$NAME" "$screenshot_folder/"

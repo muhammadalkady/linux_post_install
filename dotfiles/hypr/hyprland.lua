@@ -11,8 +11,8 @@ end)
 
 hl.config({
 	input = {
-		-- empty inherits XKB_DEFAULT_LAYOUT (libxkbcommon), falls back to "us"
-		kb_layout = "",
+		kb_layout = "us,ara",
+		kb_options = "grp:alt_shift_toggle",
 		numlock_by_default = true,
 		-- Focus windows as soon as the pointer enters them.
 		follow_mouse = 1,
