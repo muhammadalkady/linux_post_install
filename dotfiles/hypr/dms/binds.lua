@@ -160,9 +160,11 @@ hl.bind("SUPER + SHIFT + minus", hl.dsp.window.resize({ x = 0, y = -100, relativ
 hl.bind("SUPER + SHIFT + equal", hl.dsp.window.resize({ x = 0, y = 100, relative = true }), { repeating = true })
 
 -- === Screenshots ===
-hl.bind("Print", hl.dsp.exec_cmd("dms screenshot"))
-hl.bind("CTRL + Print", hl.dsp.exec_cmd("dms screenshot full"))
-hl.bind("ALT + Print", hl.dsp.exec_cmd("dms screenshot window"))
+-- Using screenshot.sh (grimblast/slurp/hyprpicker, Cairo+fontconfig text) instead of
+-- `dms screenshot`, whose region-select overlay renders hints with a hardcoded bitmap font.
+hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh --instant-area"))
+hl.bind("CTRL + Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh --instant"))
+hl.bind("ALT + Print", hl.dsp.exec_cmd("grimblast --notify copysave active"))
 
 -- === Display Profiles ===
 hl.bind("SUPER + P", hl.dsp.exec_cmd("dms ipc outputs cycleProfile"))

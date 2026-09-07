@@ -1,11 +1,36 @@
--- PaperShell-style compositor grain. Reloading the config starts enabled.
+-- PaperShell-style compositor grain. The last selected mode is persisted
+-- across reloads/reboots in state_file.
 local shader_dir = os.getenv("HOME") .. "/.config/hypr/shaders/"
+local state_file = os.getenv("HOME") .. "/.cache/hypr/papershell-mode"
 local modes = {
 	{ name = "Paper grain", shader = shader_dir .. "papershell.frag" },
 	{ name = "Book Comfort", shader = shader_dir .. "book-comfort.frag" },
 	{ name = "Off", shader = "" },
 }
-local mode = 1
+
+local function load_mode()
+	local f = io.open(state_file, "r")
+	if not f then
+		return 1
+	end
+	local n = tonumber(f:read("*a"))
+	f:close()
+	if n and modes[n] then
+		return n
+	end
+	return 1
+end
+
+local function save_mode(n)
+	os.execute("mkdir -p " .. os.getenv("HOME") .. "/.cache/hypr")
+	local f = io.open(state_file, "w")
+	if f then
+		f:write(tostring(n))
+		f:close()
+	end
+end
+
+local mode = load_mode()
 
 -- Hyprland 0.55/0.56 can leave native Wayland clients such as Chrome with
 -- stale partial buffers when full damage tracking is used on a fractionally
@@ -29,6 +54,7 @@ apply_papershell()
 
 hl.bind("SUPER + SHIFT + G", function()
 	mode = mode % #modes + 1
+	save_mode(mode)
 	apply_papershell()
 	-- The shader swap is applied on the next rendered frame. Delay the full
 	-- redraw until after that frame so every output is refreshed with the new
