@@ -100,6 +100,22 @@ Capture deliberately does not copy personal files or infer which system
 services should be enabled. Review the generated package list, split it into
 useful profiles, then add selected dotfile mappings and services manually.
 
+## Custom systemd units
+
+`system_services` in the manifest only enables units that already exist on the
+target machine — it cannot install unit files, since dotfile copies and
+`systemctl enable` calls run without root except where explicitly `sudo`'d.
+Unit files that this machine needs but aren't packaged upstream live in
+`dotfiles/systemd/`. Install and enable them with:
+
+```sh
+./scripts/install-systemd-units.sh
+```
+
+This copies each `*.service` in `dotfiles/systemd/` into `/etc/systemd/system`,
+reloads the daemon, and runs `systemctl enable --now` on each one. Run it once
+per machine after applying the manifest.
+
 ## Manifest structure
 
 - `selected_profiles` controls which profiles `apply` uses.

@@ -1,0 +1,13 @@
+[Unit]
+Description=Enable NumLock on all virtual consoles
+DefaultDependencies=no
+After=systemd-vconsole-setup.service
+Before=sddm.service getty@tty1.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'for tty in /dev/tty[1-6]; do /usr/bin/setleds -D +num < "$tty" > /dev/null 2>&1; done'
+
+[Install]
+WantedBy=sysinit.target
