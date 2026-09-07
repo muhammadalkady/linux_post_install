@@ -58,10 +58,10 @@ arch = [
 common = ["rustup", "cmake", "gitui"]
 
 [profiles.development.packages]
-fedora = ["golang-bin", "nodejs22", "python3-pip", "pipx", "clang", "ninja-build", "gh"]
-arch = ["go", "nodejs", "python-pip", "python-pipx", "clang", "ninja", "github-cli"]
-debian = ["golang", "nodejs", "python3-pip", "pipx", "clang", "ninja-build", "gh"]
-ubuntu = ["golang", "nodejs", "python3-pip", "pipx", "clang", "ninja-build", "gh"]
+fedora = ["golang-bin", "nodejs22", "python3-pip", "pipx", "clang", "ninja-build", "gh", "java-21-openjdk-headless"]
+arch = ["go", "nodejs", "python-pip", "python-pipx", "clang", "ninja", "github-cli", "jdk21-openjdk-headless"]
+debian = ["golang", "nodejs", "python3-pip", "pipx", "clang", "ninja-build", "gh", "openjdk-21-jre-headless"]
+ubuntu = ["golang", "nodejs", "python3-pip", "pipx", "clang", "ninja-build", "gh", "openjdk-21-jre-headless"]
 
 # Sources are relative to this manifest. Existing target files are replaced,
 # but files absent from the source are not deleted from the target.

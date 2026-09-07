@@ -116,6 +116,16 @@ This copies each `*.service` in `dotfiles/systemd/` into `/etc/systemd/system`,
 reloads the daemon, and runs `systemctl enable --now` on each one. Run it once
 per machine after applying the manifest.
 
+## Software without a distro package
+
+Claude Code isn't packaged natively on any supported distribution, so it
+can't live in a package profile. Install it (skipped if already present)
+with:
+
+```sh
+./scripts/install-claude-code.sh
+```
+
 ## Manifest structure
 
 - `selected_profiles` controls which profiles `apply` uses.
