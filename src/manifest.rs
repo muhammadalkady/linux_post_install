@@ -111,3 +111,40 @@ mod tests {
         assert_eq!(profile.packages_for(Distro::Arch), ["git"]);
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    fn name_strategy() -> impl Strategy<Value = String> {
+        "[a-z][a-z0-9-]{0,15}"
+    }
+
+    proptest! {
+        #[test]
+        fn starts_with_common_and_appends_distro_specific(
+            common in prop::collection::vec(name_strategy(), 0..5),
+            specific in prop::collection::vec(name_strategy(), 0..5),
+        ) {
+            let profile = PackageProfile {
+                common: common.clone(),
+                packages: BTreeMap::from([("fedora".to_owned(), specific.clone())]),
+            };
+
+            let result = profile.packages_for(Distro::Fedora);
+            prop_assert_eq!(&result[..common.len()], common.as_slice());
+            prop_assert_eq!(&result[common.len()..], specific.as_slice());
+        }
+
+        #[test]
+        fn equals_common_when_distro_absent(common in prop::collection::vec(name_strategy(), 0..5)) {
+            let profile = PackageProfile {
+                common: common.clone(),
+                packages: BTreeMap::new(),
+            };
+
+            prop_assert_eq!(profile.packages_for(Distro::Fedora), common);
+        }
+    }
+}

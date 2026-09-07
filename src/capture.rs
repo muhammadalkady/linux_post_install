@@ -97,3 +97,34 @@ fn lines(output: String) -> Vec<String> {
     values.dedup();
     values
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+    use std::collections::BTreeSet;
+
+    proptest! {
+        #[test]
+        fn is_sorted_deduped_and_drawn_from_the_input(
+            entries in prop::collection::vec("[a-zA-Z0-9 ]{0,10}", 0..10),
+        ) {
+            let joined = entries.join("\n");
+            let result = lines(joined);
+
+            let mut sorted = result.clone();
+            sorted.sort();
+            prop_assert_eq!(&result, &sorted);
+
+            let unique: BTreeSet<_> = result.iter().cloned().collect();
+            prop_assert_eq!(unique.len(), result.len());
+
+            let input_trimmed: BTreeSet<_> =
+                entries.iter().map(|entry| entry.trim().to_owned()).collect();
+            for value in &result {
+                prop_assert!(!value.is_empty());
+                prop_assert!(input_trimmed.contains(value));
+            }
+        }
+    }
+}

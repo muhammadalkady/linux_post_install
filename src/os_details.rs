@@ -234,3 +234,67 @@ fn find_value<'a>(content: &'a str, searched_key: &str) -> Option<&'a str> {
     }
     None
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    const ALL_DISTROS: [Distro; 20] = [
+        Distro::Arch,
+        Distro::Manjaro,
+        Distro::EndeavourOS,
+        Distro::Debian,
+        Distro::Ubuntu,
+        Distro::LinuxMint,
+        Distro::PopOS,
+        Distro::ElementaryOS,
+        Distro::Kali,
+        Distro::Fedora,
+        Distro::Rhel,
+        Distro::CentOS,
+        Distro::RockyLinux,
+        Distro::AlmaLinux,
+        Distro::AmazonLinux,
+        Distro::OpenSUSE,
+        Distro::Alpine,
+        Distro::Void,
+        Distro::Gentoo,
+        Distro::Solus,
+    ];
+
+    fn key_strategy() -> impl Strategy<Value = String> {
+        "[A-Z][A-Z_]{0,10}"
+    }
+
+    fn value_strategy() -> impl Strategy<Value = String> {
+        "[a-zA-Z0-9 ._-]{0,20}"
+    }
+
+    proptest! {
+        #[test]
+        fn finds_unquoted_value(key in key_strategy(), value in value_strategy()) {
+            let content = format!("{key}={value}");
+            prop_assert_eq!(find_value(&content, &key), Some(value.as_str()));
+        }
+
+        #[test]
+        fn finds_quoted_value(key in key_strategy(), value in value_strategy()) {
+            let content = format!("{key}=\"{value}\"");
+            prop_assert_eq!(find_value(&content, &key), Some(value.as_str()));
+        }
+
+        #[test]
+        fn missing_key_returns_none(key in key_strategy(), other in key_strategy(), value in value_strategy()) {
+            prop_assume!(key != other);
+            let content = format!("{other}={value}");
+            prop_assert_eq!(find_value(&content, &key), None);
+        }
+
+        #[test]
+        fn manifest_key_round_trips(index in 0..ALL_DISTROS.len()) {
+            let distro = ALL_DISTROS[index];
+            prop_assert_eq!(Distro::try_from(distro.manifest_key()), Ok(distro));
+        }
+    }
+}

@@ -262,3 +262,40 @@ fn shell_quote(value: &str) -> String {
         format!("'{}'", value.replace('\'', "'\\''"))
     }
 }
+
+#[cfg(test)]
+mod proptests {
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #![proptest_config(ProptestConfig { cases: 64, ..ProptestConfig::default() })]
+
+        #[test]
+        fn shell_quote_round_trips_through_a_real_shell(value in ".{0,40}") {
+            prop_assume!(!value.contains('\0'));
+            let quoted = shell_quote(&value);
+            let output = Command::new("sh")
+                .arg("-c")
+                .arg(format!("printf '%s' {quoted}"))
+                .output()
+                .expect("sh runs");
+            prop_assert!(output.status.success());
+            prop_assert_eq!(String::from_utf8_lossy(&output.stdout), value);
+        }
+
+        #[test]
+        fn expand_home_leaves_non_tilde_paths_unchanged(path in ".{0,40}") {
+            prop_assume!(!path.contains('\0'));
+            prop_assume!(path != "~" && !path.starts_with("~/"));
+            prop_assert_eq!(expand_home(&path).unwrap(), PathBuf::from(&path));
+        }
+
+        #[test]
+        fn expand_home_joins_home_for_tilde_paths(rest in "[a-zA-Z0-9/_.-]{0,20}") {
+            let home = env::var_os("HOME").expect("HOME is set in test environment");
+            let path = format!("~/{rest}");
+            prop_assert_eq!(expand_home(&path).unwrap(), PathBuf::from(home).join(&rest));
+        }
+    }
+}
